@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import * as THREE from 'three';
 import 'tailwindcss/tailwind.css';
 import Welcome from '../components/WelcomeScreen';
-import { Slider, TextField, FormControl, InputLabel, MenuItem, Select, OutlinedInput, SelectChangeEvent, Stack, IconButton } from '@mui/material';
+import { Slider, FormControl, InputLabel, MenuItem, Select, OutlinedInput, SelectChangeEvent, Stack, IconButton } from '@mui/material';
 import MicIcon from '@mui/icons-material/Mic';
 import { Theme, useTheme } from '@mui/material/styles';
 
@@ -66,6 +66,7 @@ export default function Home() {
   return (
     <section className="flex relative flex-col items-center justify-center min-h-screen bg-black text-white font-primary p-4 sm:p-8">
       <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white font-primary p-4 sm:p-8">
+        <h3 className="text-12 sm:text-12 font-bold mb-2 font-primary text-center">by Igor Boechat</h3>
         <h1 className="text-4xl sm:text-8xl font-bold mb-2 font-primary border-3 border-white text-center">Kinetic Text App</h1>
         <div className="flex flex-col sm:flex-row gap-4 mb-4">
           <FormControl sx={{ m: 1, width: '100%', sm: { width: 300 } }}>
@@ -144,9 +145,9 @@ export default function Home() {
         </div>
 
         {/* 3D Scene */}
-        <div className="relative w-full h-screen mt-2">
-          <div className="absolute top-0 left-0 p-4">
-            <div className="flex flex-col gap-2">
+        <div className="relative w-full h-screen mt-1">
+          <div className="absolute top-0 left-0 p-2 z-10">
+            <div className="grid grid-cols-3 gap-8">
               {[
                 { label: 'Displacement Intensity', value: displacementIntensity, setter: setDisplacementIntensity },
                 { label: 'Scaling Intensity', value: scalingIntensity, setter: setScalingIntensity },
@@ -155,7 +156,7 @@ export default function Home() {
                 { label: 'Fragmentation Intensity', value: fragmentationIntensity, setter: setFragmentationIntensity },
               ].map(({ label, value, setter }) => (
                 <div key={label} className="w-22">
-                  <label className="block mb-1 text-gray-400">{label}:</label>
+                  <label className="block text-gray-400">{label}:</label>
                   <Slider
                     value={value}
                     min={0}
@@ -185,7 +186,7 @@ export default function Home() {
         </div>
 
         {/* Microphone Button */}
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 flex gap-4 bg-black p-2 rounded-xl border border-white z-50">
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 flex gap-4 bg-black p-2 rounded-xl border border-white z-20">
           <Stack spacing={2} direction="row">
             <IconButton
               onClick={() => setIsMicActive(!isMicActive)}

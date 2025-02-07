@@ -1,6 +1,5 @@
 import React from 'react';
 
-
 type WelcomeProps = {
   onStart: () => void;
 };
@@ -17,11 +16,11 @@ const WelcomeScreen: React.FC<WelcomeProps> = ({ onStart }) => {
       </p>
 
       {/* Features Section */}
-      <section className="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-4xl mt-12">
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-4xl mt-12">
         {/* Feature 1 */}
         <div className="flex flex-col items-center text-center border-2 border-white p-4">
           <i className="fas fa-microphone-alt text-4xl mb-4"></i>
-          <h2 className="text-2xl font-serif  font-bold mb-2">Voice Input</h2>
+          <h2 className="text-2xl font-serif font-bold mb-2">Voice Input</h2>
           <p className="font-serif">
             Use your microphone to bring your words to life with dynamic animations.
           </p>
