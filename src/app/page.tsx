@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import * as THREE from 'three';
 import 'tailwindcss/tailwind.css';
 import Welcome from '../components/WelcomeScreen';
-import { Slider, FormControl, InputLabel, MenuItem, Select, OutlinedInput, SelectChangeEvent, Stack, IconButton } from '@mui/material';
+import { Slider, FormControl, InputLabel, MenuItem, Select, OutlinedInput, SelectChangeEvent, Stack, IconButton, TextField } from '@mui/material';
 import MicIcon from '@mui/icons-material/Mic';
 import { Theme, useTheme } from '@mui/material/styles';
 
@@ -143,6 +143,28 @@ export default function Home() {
             </Select>
           </FormControl>
         </div>
+
+        <TextField
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="TYPE"
+          variant="outlined"
+          fullWidth
+          sx={{
+            input: { color: 'white' },
+            '& .MuiOutlinedInput-root': {
+              '& fieldset': {
+                borderColor: 'white',
+              },
+              '&:hover fieldset': {
+                borderColor: 'white',
+              },
+            },
+            '& .MuiInputLabel-root': {
+              color: 'white',
+            },
+          }}
+        />
 
         {/* 3D Scene */}
         <div className="relative w-full h-screen mt-1">
