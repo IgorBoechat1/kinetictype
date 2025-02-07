@@ -1,0 +1,90 @@
+'use client';
+import React from 'react';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls } from '@react-three/drei';
+import TextMesh from './TextMesh';
+import * as THREE from 'three';
+import mirrorShader from '../shaders/mirrorShader';
+import glassShader from '../shaders/glassShader';
+import linesShader from '../shaders/linesShader';
+import randomShader from '../shaders/randomShader';
+import fragmentShader from '../shaders/fragmentShader';
+import { standardFragmentShader } from '../shaders/standardShader';
+import poserShader from '../shaders/poserShader';
+import locoShader from '../shaders/locoShader';
+import pavoiShader from '../shaders/pavoiShader';
+
+const fontFiles = {
+  Playfair: '/assets/Playfair.json',
+  Monigue: '/assets/Monigue.json',
+  Cocogoose: '/assets/Cocogoose.json',
+  Bodoni: '/assets/Bodoni.json',
+  AfterShok: '/assets/AfterShok.json',
+  Batuphat: '/assets/Batuphat.json',
+  Barrio: '/assets/Barrio.json',
+  DinerFat: '/assets/DinerFat.json',
+  LeagueGothic: '/assets/LeagueGothic.json',
+  FancyPants: '/assets/FancyPants.json',
+  db: '/assets/db.json',
+  Seaside: '/assets/Seaside.json',
+};
+
+const fragmentShaders = {
+  Mirror: mirrorShader,
+  Glass: glassShader,
+  Lines: linesShader,
+  Random: randomShader,
+  Fragment: fragmentShader,
+  Standard: standardFragmentShader,
+  Poser: poserShader,
+  Loco: locoShader,
+  Pavoi: pavoiShader,
+};
+
+interface SceneProps {
+  text: string;
+  color: THREE.Color;
+  displacementIntensity: number;
+  scalingIntensity: number;
+  rotationIntensity: number;
+  waveIntensity: number;
+  fragmentationIntensity: number;
+  isMicActive: boolean;
+  font: keyof typeof fontFiles;
+  texture: keyof typeof fragmentShaders | 'Standard';
+}
+
+const Scene: React.FC<SceneProps> = ({
+  text,
+  color,
+  displacementIntensity,
+  scalingIntensity,
+  rotationIntensity,
+  waveIntensity,
+  fragmentationIntensity,
+  isMicActive,
+  font,
+  texture,
+}) => {
+  return (
+    <Canvas style={{ width: '100%', height: '100vh' }}>
+      <ambientLight intensity={0.5} />
+      <pointLight position={[10, 10, 10]} />
+      <TextMesh
+        text={text}
+        color={color}
+        displacementIntensity={displacementIntensity}
+        scalingIntensity={scalingIntensity}
+        rotationIntensity={rotationIntensity}
+        waveIntensity={waveIntensity}
+        fragmentationIntensity={fragmentationIntensity}
+        isMicActive={isMicActive}
+        font={font}
+        texture={texture}
+      />
+      <OrbitControls enableZoom={false} enablePan={false} />
+    </Canvas>
+  );
+};
+
+export default Scene;
