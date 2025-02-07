@@ -64,11 +64,11 @@ export default function Home() {
   }
 
   return (
-    <section className="flex relative flex-col items-center justify-center min-h-screen bg-black text-white font-primary p-8">
-      <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white font-primary p-8">
-        <h1 className="text-8xl font-bold mb-2 font-primary border-3 border-white">Kinetic Text App</h1>
-        <div className="flex gap-4 mb-4">
-          <FormControl sx={{ m: 1, width: 300 }}>
+    <section className="flex relative flex-col items-center justify-center min-h-screen bg-black text-white font-primary p-4 sm:p-8">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white font-primary p-4 sm:p-8">
+        <h1 className="text-4xl sm:text-8xl font-bold mb-2 font-primary border-3 border-white text-center">Kinetic Text App</h1>
+        <div className="flex flex-col sm:flex-row gap-4 mb-4">
+          <FormControl sx={{ m: 1, width: '100%', sm: { width: 300 } }}>
             <InputLabel id="font-select-label" sx={{ color: 'white' }}>Choose Font</InputLabel>
             <Select
               labelId="font-select-label"
@@ -105,7 +105,7 @@ export default function Home() {
             </Select>
           </FormControl>
 
-          <FormControl sx={{ m: 1, width: 300 }}>
+          <FormControl sx={{ m: 1, width: '100%', sm: { width: 300 } }}>
             <InputLabel id="texture-select-label" sx={{ color: 'white' }}>Choose Texture</InputLabel>
             <Select
               labelId="texture-select-label"
@@ -143,29 +143,45 @@ export default function Home() {
           </FormControl>
         </div>
 
-        {/* Sliders */}
-        <div className="flex absolutegrid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-          {[
-            { label: 'Displacement Intensity', value: displacementIntensity, setter: setDisplacementIntensity },
-            { label: 'Scaling Intensity', value: scalingIntensity, setter: setScalingIntensity },
-            { label: 'Rotation Intensity', value: rotationIntensity, setter: setRotationIntensity },
-            { label: 'Wave Intensity', value: waveIntensity, setter: setWaveIntensity },
-            { label: 'Fragmentation Intensity', value: fragmentationIntensity, setter: setFragmentationIntensity },
-          ].map(({ label, value, setter }) => (
-            <div key={label} className="w-22">
-              <label className="block mb-2 text-gray-400">{label} Intensity:</label>
-              <Slider
-                value={value}
-                min={0}
-                max={10}
-                step={0.1}
-                onChange={(e: Event, newValue: number | number[]) => setter(newValue as number)}
-                aria-label={label}
-                valueLabelDisplay="auto"
-                sx={{ color: 'white' }}
-              />
+        {/* 3D Scene */}
+        <div className="relative w-full h-screen mt-2">
+          <div className="absolute top-0 left-0 p-4">
+            <div className="flex flex-col gap-2">
+              {[
+                { label: 'Displacement Intensity', value: displacementIntensity, setter: setDisplacementIntensity },
+                { label: 'Scaling Intensity', value: scalingIntensity, setter: setScalingIntensity },
+                { label: 'Rotation Intensity', value: rotationIntensity, setter: setRotationIntensity },
+                { label: 'Wave Intensity', value: waveIntensity, setter: setWaveIntensity },
+                { label: 'Fragmentation Intensity', value: fragmentationIntensity, setter: setFragmentationIntensity },
+              ].map(({ label, value, setter }) => (
+                <div key={label} className="w-22">
+                  <label className="block mb-1 text-gray-400">{label}:</label>
+                  <Slider
+                    value={value}
+                    min={0}
+                    max={10}
+                    step={0.1}
+                    onChange={(e: Event, newValue: number | number[]) => setter(newValue as number)}
+                    aria-label={label}
+                    valueLabelDisplay="auto"
+                    sx={{ color: 'white' }}
+                  />
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+          <Scene
+            text={text}
+            color={color}
+            displacementIntensity={displacementIntensity}
+            scalingIntensity={scalingIntensity}
+            rotationIntensity={rotationIntensity}
+            waveIntensity={waveIntensity}
+            fragmentationIntensity={fragmentationIntensity}
+            isMicActive={isMicActive}
+            font={font}
+            texture={texture}
+          />
         </div>
 
         {/* Microphone Button */}
@@ -180,22 +196,6 @@ export default function Home() {
               <MicIcon sx={{ color: 'white' }} />
             </IconButton>
           </Stack>
-        </div>
-
-        {/* 3D Scene */}
-        <div className="w-full h-screen mt-2">
-          <Scene
-            text={text}
-            color={color}
-            displacementIntensity={displacementIntensity}
-            scalingIntensity={scalingIntensity}
-            rotationIntensity={rotationIntensity}
-            waveIntensity={waveIntensity}
-            fragmentationIntensity={fragmentationIntensity}
-            isMicActive={isMicActive}
-            font={font}
-            texture={texture}
-          />
         </div>
       </div>
     </section>

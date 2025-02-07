@@ -82,7 +82,7 @@ const Scene: React.FC<SceneProps> = ({
         font={font}
         texture={texture}
       />
-      <OrbitControls enableZoom={false} enablePan={false} />
+      <OrbitControls enableZoom={true} enablePan={true} />
     </Canvas>
   );
 };
