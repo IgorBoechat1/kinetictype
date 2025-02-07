@@ -10,7 +10,6 @@ import glassShader from '../shaders/glassShader';
 import linesShader from '../shaders/linesShader';
 import randomShader from '../shaders/randomShader';
 import fragmentShader from '../shaders/fragmentShader';
-import { standardVertexShader, standardFragmentShader } from '../shaders/standardShader';
 import poserShader from '@/shaders/poserShader';
 import pavoiShader from '@/shaders/pavoiShader';
 import locoShader from '@/shaders/locoShader';
@@ -36,7 +35,6 @@ const fragmentShaders = {
   Lines: linesShader,
   Random: randomShader,
   Fragment: fragmentShader,
-  Standard: standardFragmentShader,
   Poser: poserShader,
   Loco: locoShader,
   Pavoi: pavoiShader,
@@ -94,15 +92,10 @@ function TextMesh({ text, color, displacementIntensity, scalingIntensity, rotati
 
           let material;
           if (texture === 'Standard') {
-            material = new THREE.ShaderMaterial({
-              vertexShader: standardVertexShader,
-              fragmentShader: standardFragmentShader,
-              uniforms: {
-                u_color: { value: color },
-                u_lightPosition: { value: new THREE.Vector3(0, 10, 10) },
-                u_viewPosition: { value: camera.position },
-              },
-              side: THREE.DoubleSide,
+            material = new THREE.MeshStandardMaterial({
+              color: color,
+              roughness: 0.5,
+              metalness: 0.5,
             });
           } else {
             material = new THREE.ShaderMaterial({

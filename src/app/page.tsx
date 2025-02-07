@@ -27,9 +27,9 @@ const MenuProps = {
   },
 };
 
-function getStyles(name: string, selectedNames: string[], theme: Theme) {
+function getStyles(name: string, selectedName: string, theme: Theme) {
   return {
-    fontWeight: selectedNames.includes(name)
+    fontWeight: selectedName === name
       ? theme.typography.fontWeightMedium
       : theme.typography.fontWeightRegular,
   };
@@ -50,25 +50,13 @@ export default function Home() {
   const [texture, setTexture] = useState<TextureOption>('Mirror');
 
   const theme = useTheme();
-  const [selectedFonts, setSelectedFonts] = useState<string[]>([font]);
-  const [selectedTextures, setSelectedTextures] = useState<string[]>([texture]);
 
-  const handleFontChange = (event: SelectChangeEvent<typeof selectedFonts>) => {
-    const {
-      target: { value },
-    } = event;
-    const selectedFont = typeof value === 'string' ? value.split(',') : value;
-    setSelectedFonts(selectedFont);
-    setFont(selectedFont[0] as FontOption); // Update the font state
+  const handleFontChange = (event: SelectChangeEvent<FontOption>) => {
+    setFont(event.target.value as FontOption);
   };
 
-  const handleTextureChange = (event: SelectChangeEvent<typeof selectedTextures>) => {
-    const {
-      target: { value },
-    } = event;
-    const selectedTexture = typeof value === 'string' ? value.split(',') : value;
-    setSelectedTextures(selectedTexture);
-    setTexture(selectedTexture[0] as TextureOption); // Update the texture state
+  const handleTextureChange = (event: SelectChangeEvent<TextureOption>) => {
+    setTexture(event.target.value as TextureOption);
   };
 
   if (!showApp) {
@@ -85,8 +73,7 @@ export default function Home() {
             <Select
               labelId="font-select-label"
               id="font-select"
-              multiple
-              value={selectedFonts}
+              value={font}
               onChange={handleFontChange}
               input={<OutlinedInput label="Choose Font" />}
               MenuProps={MenuProps}
@@ -104,13 +91,13 @@ export default function Home() {
                   color: 'white',
                 },
               }}
-              renderValue={(selected) => selected.join(', ')}
+              renderValue={(selected) => selected}
             >
               {fontOptions.map((fontOption) => (
                 <MenuItem
                   key={fontOption}
                   value={fontOption}
-                  style={getStyles(fontOption, selectedFonts, theme)}
+                  style={getStyles(fontOption, font, theme)}
                 >
                   {fontOption}
                 </MenuItem>
@@ -123,8 +110,7 @@ export default function Home() {
             <Select
               labelId="texture-select-label"
               id="texture-select"
-              multiple
-              value={selectedTextures}
+              value={texture}
               onChange={handleTextureChange}
               input={<OutlinedInput label="Choose Texture" />}
               MenuProps={MenuProps}
@@ -142,13 +128,13 @@ export default function Home() {
                   color: 'white',
                 },
               }}
-              renderValue={(selected) => selected.join(', ')}
+              renderValue={(selected) => selected}
             >
               {textureOptions.map((textureOption) => (
                 <MenuItem
                   key={textureOption}
                   value={textureOption}
-                  style={getStyles(textureOption, selectedTextures, theme)}
+                  style={getStyles(textureOption, texture, theme)}
                 >
                   {textureOption}
                 </MenuItem>
