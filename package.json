@@ -28,7 +28,6 @@
     "react-dom": "^18.2.0",
     "three": "^0.166.1",
     "three-bmfont-text": "^3.0.1",
-    "three-custom-shader-material": "^6.3.0",
     "three-mesh-ui": "^6.5.4",
     "tone": "^15.0.4",
     "troika": "^1.0.0"
