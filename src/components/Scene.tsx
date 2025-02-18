@@ -3,16 +3,8 @@ import React from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import TextMesh from './TextMesh';
+import TriangleMesh from './TriangleMesh';
 import * as THREE from 'three';
-import mirrorShader from '../shaders/mirrorShader';
-import glassShader from '../shaders/glassShader';
-import linesShader from '../shaders/linesShader';
-import randomShader from '../shaders/randomShader';
-import fragmentShader from '../shaders/fragmentShader';
-import { standardFragmentShader } from '../shaders/standardShader';
-import poserShader from '../shaders/poserShader';
-import locoShader from '../shaders/locoShader';
-import pavoiShader from '../shaders/pavoiShader';
 
 const fontFiles = {
   Playfair: '/assets/Playfair.json',
@@ -29,18 +21,6 @@ const fontFiles = {
   Seaside: '/assets/Seaside.json',
 };
 
-const fragmentShaders = {
-  Mirror: mirrorShader,
-  Glass: glassShader,
-  Lines: linesShader,
-  Random: randomShader,
-  Fragment: fragmentShader,
-  Standard: standardFragmentShader,
-  Poser: poserShader,
-  Loco: locoShader,
-  Pavoi: pavoiShader,
-};
-
 interface SceneProps {
   text: string;
   color: THREE.Color;
@@ -51,7 +31,9 @@ interface SceneProps {
   fragmentationIntensity: number;
   isMicActive: boolean;
   font: keyof typeof fontFiles;
-  texture: keyof typeof fragmentShaders | 'Standard';
+  texture: string;
+  showTextMesh: boolean;
+  showPointCloud: boolean;
 }
 
 const Scene: React.FC<SceneProps> = ({
@@ -65,25 +47,42 @@ const Scene: React.FC<SceneProps> = ({
   isMicActive,
   font,
   texture,
+  showTextMesh,
+  showPointCloud,
 }) => {
   return (
-    <Canvas style={{ width: '100%', height: '100vh' }}>
-      <ambientLight intensity={0.5} />
-      <pointLight position={[10, 10, 10]} />
-      <TextMesh
-        text={text}
-        color={color}
-        displacementIntensity={displacementIntensity}
-        scalingIntensity={scalingIntensity}
-        rotationIntensity={rotationIntensity}
-        waveIntensity={waveIntensity}
-        fragmentationIntensity={fragmentationIntensity}
-        isMicActive={isMicActive}
-        font={font}
-        texture={texture}
-      />
-      <OrbitControls enableZoom={true} enablePan={true} />
-    </Canvas>
+    <div style={{ width: '100%', height: '100vh' }}>
+      <Canvas style={{ width: '100%', height: '100vh' }}>
+        <ambientLight intensity={0.5} />
+        <pointLight position={[10, 10, 10]} />
+        {showTextMesh ? (
+          <TextMesh
+            text={text}
+            color={color}
+            displacementIntensity={displacementIntensity}
+            scalingIntensity={scalingIntensity}
+            rotationIntensity={rotationIntensity}
+            waveIntensity={waveIntensity}
+            fragmentationIntensity={fragmentationIntensity}
+            isMicActive={isMicActive}
+            font={font}
+         
+          />
+        ) : (
+          <TriangleMesh
+            color={color}
+            isMicActive={isMicActive}
+            showPointCloud={showPointCloud}
+            displacementIntensity={displacementIntensity}
+            scalingIntensity={scalingIntensity}
+            rotationIntensity={rotationIntensity}
+            waveIntensity={waveIntensity}
+            fragmentationIntensity={fragmentationIntensity}
+          />
+        )}
+        <OrbitControls enableZoom={true} enablePan={true} />
+      </Canvas>
+    </div>
   );
 };
 

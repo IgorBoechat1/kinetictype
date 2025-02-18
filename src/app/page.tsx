@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import * as THREE from 'three';
 import 'tailwindcss/tailwind.css';
 import Welcome from '../components/WelcomeScreen';
-import { Slider, FormControl, InputLabel, MenuItem, Select, OutlinedInput, SelectChangeEvent, Stack, IconButton, TextField } from '@mui/material';
+import { Slider, FormControl, InputLabel, MenuItem, Select, OutlinedInput, SelectChangeEvent, Stack, IconButton, TextField, Button } from '@mui/material';
 import MicIcon from '@mui/icons-material/Mic';
 import { Theme, useTheme } from '@mui/material/styles';
 
@@ -37,6 +37,8 @@ function getStyles(name: string, selectedName: string, theme: Theme) {
 
 export default function Home() {
   const [showApp, setShowApp] = useState(false);
+  const [showTextMesh, setShowTextMesh] = useState(true);
+  const [showPointCloud, setShowPointCloud] = useState(false);
 
   const [text, setText] = useState('TYPE');
   const [color, setColor] = useState(new THREE.Color('#FFFFFF'));
@@ -64,11 +66,11 @@ export default function Home() {
   }
 
   return (
-    <section className="flex relative flex-col items-center justify-center min-h-screen bg-black text-white font-primary p-4 sm:p-8">
-      <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white font-primary p-4 sm:p-8">
+    <section className="flex flex-col items-center justify-center min-h-screen bg-black text-white font-primary p-4 sm:p-8">
+      <div className="flex flex-col items-center justify-center w-full">
         <h3 className="text-12 sm:text-12 font-bold mb-2 font-primary text-center">by Igor Boechat</h3>
         <h1 className="text-4xl sm:text-8xl font-bold mb-2 font-primary border-3 border-white text-center">Kinetic Text App</h1>
-        <div className="flex flex-col sm:flex-row gap-4 mb-4">
+        <div className="flex flex-col sm:flex-row gap-4 mb-4 w-full">
           <FormControl sx={{ m: 1, width: '100%', sm: { width: 300 } }}>
             <InputLabel id="font-select-label" sx={{ color: 'white' }}>Choose Font</InputLabel>
             <Select
@@ -165,34 +167,33 @@ export default function Home() {
             },
           }}
         />
+      </div>
 
-        {/* 3D Scene */}
-        <div className="relative w-full h-screen mt-1">
-          <div className="absolute top-0 left-0 p-2 z-10">
-            <div className="grid grid-cols-3 gap-8">
-              {[
-                { label: 'Displacement Intensity', value: displacementIntensity, setter: setDisplacementIntensity },
-                { label: 'Scaling Intensity', value: scalingIntensity, setter: setScalingIntensity },
-                { label: 'Rotation Intensity', value: rotationIntensity, setter: setRotationIntensity },
-                { label: 'Wave Intensity', value: waveIntensity, setter: setWaveIntensity },
-                { label: 'Fragmentation Intensity', value: fragmentationIntensity, setter: setFragmentationIntensity },
-              ].map(({ label, value, setter }) => (
-                <div key={label} className="w-22">
-                  <label className="block text-gray-400">{label}:</label>
-                  <Slider
-                    value={value}
-                    min={0}
-                    max={10}
-                    step={0.1}
-                    onChange={(e: Event, newValue: number | number[]) => setter(newValue as number)}
-                    aria-label={label}
-                    valueLabelDisplay="auto"
-                    sx={{ color: 'white' }}
-                  />
-                </div>
-              ))}
+      <div className="flex flex-col w-full h-full mt-4">
+        <div className="flex flex-col sm:flex-row gap-4 p-4">
+          {[
+            { label: 'Displacement Intensity', value: displacementIntensity, setter: setDisplacementIntensity },
+            { label: 'Scaling Intensity', value: scalingIntensity, setter: setScalingIntensity },
+            { label: 'Rotation Intensity', value: rotationIntensity, setter: setRotationIntensity },
+            { label: 'Wave Intensity', value: waveIntensity, setter: setWaveIntensity },
+            { label: 'Fragmentation Intensity', value: fragmentationIntensity, setter: setFragmentationIntensity },
+          ].map(({ label, value, setter }) => (
+            <div key={label} className="w-full sm:w-1/5">
+              <label className="block text-gray-400">{label}:</label>
+              <Slider
+                value={value}
+                min={0}
+                max={10}
+                step={0.1}
+                onChange={(e, newValue) => setter(newValue as number)}
+                aria-label={label}
+                valueLabelDisplay="auto"
+                sx={{ color: 'white' }}
+              />
             </div>
-          </div>
+          ))}
+        </div>
+        <div className="relative w-full flex-grow">
           <Scene
             text={text}
             color={color}
@@ -204,22 +205,38 @@ export default function Home() {
             isMicActive={isMicActive}
             font={font}
             texture={texture}
+            showTextMesh={showTextMesh}
+            showPointCloud={showPointCloud}
           />
         </div>
+      </div>
 
-        {/* Microphone Button */}
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 flex gap-4 bg-black p-2 rounded-xl border border-white z-20">
-          <Stack spacing={2} direction="row">
-            <IconButton
-              onClick={() => setIsMicActive(!isMicActive)}
-              className={`w-12 h-12 flex items-center justify-center rounded-lg border ${
-                isMicActive ? 'bg-white text-black' : 'bg-black text-white'
-              } hover:bg-white hover:text-black transition-colors`}
-            >
-              <MicIcon sx={{ color: 'white' }} />
-            </IconButton>
-          </Stack>
-        </div>
+      {/* Microphone Button */}
+      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 flex gap-4 bg-black p-2 rounded-xl border border-white z-20">
+        <Stack spacing={2} direction="row">
+          <IconButton
+            onClick={() => setIsMicActive(!isMicActive)}
+            className={`w-12 h-12 flex items-center justify-center rounded-lg border ${
+              isMicActive ? 'bg-white text-black' : 'bg-black text-white'
+            } hover:bg-white hover:text-black transition-colors`}
+          >
+            <MicIcon sx={{ color: 'white' }} />
+          </IconButton>
+          <Button
+            onClick={() => setShowTextMesh(!showTextMesh)}
+            variant="contained"
+            color="primary"
+          >
+            Toggle Mesh
+          </Button>
+          <Button
+            onClick={() => setShowPointCloud(!showPointCloud)}
+            variant="contained"
+            color="secondary"
+          >
+            Toggle Point Cloud
+          </Button>
+        </Stack>
       </div>
     </section>
   );
