@@ -63,10 +63,8 @@ const Scene: React.FC<SceneProps> = ({
             scalingIntensity={scalingIntensity}
             rotationIntensity={rotationIntensity}
             waveIntensity={waveIntensity}
-            fragmentationIntensity={fragmentationIntensity}
             isMicActive={isMicActive}
             font={font}
-         
           />
         ) : (
           <TriangleMesh

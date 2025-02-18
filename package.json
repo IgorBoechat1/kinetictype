@@ -29,6 +29,7 @@
     "three": "^0.166.1",
     "three-bmfont-text": "^3.0.1",
     "three-mesh-ui": "^6.5.4",
+    "three-stdlib": "^2.35.13",
     "tone": "^15.0.4",
     "troika": "^1.0.0"
   },

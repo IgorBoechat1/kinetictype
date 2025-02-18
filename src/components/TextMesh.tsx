@@ -4,8 +4,6 @@ import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry';
-import vertexShader from '../shaders/vertexShader';
-import fragmentShader from '../shaders/fragmentShader';
 
 const fontFiles = {
   Playfair: '/assets/Playfair.json',
@@ -29,7 +27,6 @@ interface TextProps {
   scalingIntensity: number;
   rotationIntensity: number;
   waveIntensity: number;
-  fragmentationIntensity: number;
   isMicActive: boolean;
   font: keyof typeof fontFiles;
 }
@@ -38,7 +35,7 @@ function easeInOutCubic(t: number): number {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
-function TextMesh({ text, color, displacementIntensity, scalingIntensity, rotationIntensity, waveIntensity, fragmentationIntensity, isMicActive, font }: TextProps) {
+function TextMesh({ text, color, displacementIntensity, scalingIntensity, rotationIntensity, waveIntensity, isMicActive, font }: TextProps) {
   const groupRef = useRef<THREE.Group>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const dataArrayRef = useRef<Uint8Array | null>(null);
@@ -49,77 +46,76 @@ function TextMesh({ text, color, displacementIntensity, scalingIntensity, rotati
     const loader = new FontLoader();
     loader.load(fontFiles[font], (font) => {
       if (groupRef.current) {
-        groupRef.current.clear(); // Clear previous characters
-
+        groupRef.current.clear();
         const geometry = new TextGeometry(text, {
           font: font,
           size: 3,
-          height: 0.1, // Reduce extrude depth
-          curveSegments: 128, // Increase curve segments for smoother curves
+          height: 0.1,
+          curveSegments: 32,
           bevelEnabled: true,
-          bevelThickness: 0.2, // Increase bevel thickness for more roundness
-          bevelSize: 0.2, // Increase bevel size for more roundness
+          bevelThickness: 0.2,
+          bevelSize: 0.2,
           bevelOffset: 0,
-          bevelSegments: 36, // Increase bevel segments for smoother bevels
+          bevelSegments: 8,
         });
 
-        // Create initial position attribute
-        const initialPosition = geometry.attributes.position.clone();
-        geometry.setAttribute('initialPosition', initialPosition);
+        geometry.computeBoundingBox();
+        geometry.computeBoundingSphere();
 
-        const points = new THREE.Points(
-          geometry,
-          new THREE.ShaderMaterial({
-            vertexShader,
-            fragmentShader,
-            uniforms: {
-              u_time: { value: 0 },
-              u_resolution: { value: new THREE.Vector2(size.width, size.height) },
-              u_color: { value: color },
-              u_lightPosition: { value: new THREE.Vector3(0, 10, 10) },
-              u_viewPosition: { value: camera.position },
-              u_soundData: { value: 0 }, // Add sound data uniform
-              u_displacementIntensity: { value: displacementIntensity },
-              u_scalingIntensity: { value: scalingIntensity },
-              u_rotationIntensity: { value: rotationIntensity },
-              u_waveIntensity: { value: waveIntensity },
-              u_fragmentationIntensity: { value: fragmentationIntensity },
-            },
-            side: THREE.DoubleSide,
-          })
-        );
+        const boundingBox = geometry.boundingBox;
+        const pointsGeometry = new THREE.BufferGeometry();
+        const numPoints = 5000; // Reduced number of points for better performance
+        const positions = new Float32Array(numPoints * 3);
 
+        if (boundingBox) {
+          for (let i = 0; i < numPoints; i++) {
+            let x, y, z;
+            let point;
+            do {
+              x = THREE.MathUtils.randFloat(boundingBox.min.x, boundingBox.max.x);
+              y = THREE.MathUtils.randFloat(boundingBox.min.y, boundingBox.max.y);
+              z = THREE.MathUtils.randFloat(boundingBox.min.z, boundingBox.max.z);
+              point = new THREE.Vector3(x, y, z);
+            } while (!isPointInsideGeometry(point, geometry));
+            positions.set([x, y, z], i * 3);
+          }
+        }
+
+        pointsGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+        const material = new THREE.PointsMaterial({ color, size: 0.05 });
+        const points = new THREE.Points(pointsGeometry, material);
         groupRef.current.add(points);
-        groupRef.current.position.set(-text.length * 1.5, 0, -10); // Center the text group in front of the camera
-        scene.add(groupRef.current); // Add the group to the scene
+        scene.add(groupRef.current);
       }
     });
 
-    // Set up audio context and analyser
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     const analyser = audioContext.createAnalyser();
     analyser.fftSize = 256;
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
 
-    // Get microphone input
-    if (isMicActive) {
-      navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-        const source = audioContext.createMediaStreamSource(stream);
-        source.connect(analyser);
-        analyserRef.current = analyser;
-        dataArrayRef.current = dataArray;
-      }).catch((err) => {
-        console.error('Error accessing microphone:', err);
-      });
-    }
-
-    return () => {
-      if (audioContext) {
-        audioContext.close();
+    const setupMic = async () => {
+      if (isMicActive) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const source = audioContext.createMediaStreamSource(stream);
+          source.connect(analyser);
+          analyserRef.current = analyser;
+          dataArrayRef.current = dataArray;
+        } catch (error) {
+          console.error(error);
+        }
       }
     };
-  }, [text, color, displacementIntensity, scalingIntensity, rotationIntensity, waveIntensity, fragmentationIntensity, isMicActive, font, size, scene]);
+
+    setupMic();
+
+    return () => {
+      audioContext.close();
+    };
+  }, [text, color, displacementIntensity, scalingIntensity, waveIntensity, isMicActive, font, scene]);
 
   useFrame(() => {
     if (groupRef.current && analyserRef.current && dataArrayRef.current) {
@@ -127,38 +123,32 @@ function TextMesh({ text, color, displacementIntensity, scalingIntensity, rotati
       const avgFrequency = dataArrayRef.current.reduce((a, b) => a + b, 0) / dataArrayRef.current.length;
       const t = avgFrequency / 256;
       const easedT = easeInOutCubic(t);
-      const time = clock.getElapsedTime();
 
-      groupRef.current.children.forEach((child, index) => {
+      groupRef.current.children.forEach((child) => {
         const points = child as THREE.Points;
-        const material = points.material as THREE.ShaderMaterial;
         const geometry = points.geometry as THREE.BufferGeometry;
         const positionAttribute = geometry.getAttribute('position') as THREE.BufferAttribute;
-        const initialPositionAttribute = geometry.getAttribute('initialPosition') as THREE.BufferAttribute;
-
-        // Update uniforms
-        material.uniforms.u_time.value = time;
-        material.uniforms.u_soundData.value = easedT;
 
         for (let i = 0; i < positionAttribute.count; i++) {
-          const x = initialPositionAttribute.getX(i);
-          const y = initialPositionAttribute.getY(i);
-          const z = initialPositionAttribute.getZ(i);
-
-          // Distort vertices based on sound data
-          positionAttribute.setXYZ(i, x + x * t * 0.1, y + y * t * 0.1, z + z * t * 0.1);
+          const x = positionAttribute.getX(i);
+          const y = positionAttribute.getY(i);
+          const z = positionAttribute.getZ(i);
+          positionAttribute.setXYZ(i, x, y, z);
         }
         positionAttribute.needsUpdate = true;
-
-        points.scale.set(1 + easedT * scalingIntensity, 1 + easedT * scalingIntensity, 1 + easedT * scalingIntensity);
       });
-
-      // Comment out or remove the following line to stop automatic rotation
-      // groupRef.current.rotation.y += 0.01; // Adjust the rotation speed as needed
     }
   });
 
   return <group ref={groupRef} />;
+}
+
+function isPointInsideGeometry(point: THREE.Vector3, geometry: THREE.BufferGeometry): boolean {
+  const raycaster = new THREE.Raycaster();
+  const direction = new THREE.Vector3(1, 0, 0);
+  raycaster.set(point, direction);
+  const intersects = raycaster.intersectObject(new THREE.Mesh(geometry));
+  return intersects.length % 2 === 1;
 }
 
 export default TextMesh;
