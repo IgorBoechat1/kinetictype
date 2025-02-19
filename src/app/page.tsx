@@ -106,44 +106,7 @@ export default function Home() {
               ))}
             </Select>
           </FormControl>
-
-          <FormControl sx={{ m: 1, width: '100%', sm: { width: 300 } }}>
-            <InputLabel id="texture-select-label" sx={{ color: 'white' }}>Choose Texture</InputLabel>
-            <Select
-              labelId="texture-select-label"
-              id="texture-select"
-              value={texture}
-              onChange={handleTextureChange}
-              input={<OutlinedInput label="Choose Texture" />}
-              MenuProps={MenuProps}
-              sx={{
-                '& .MuiInputBase-root': {
-                  color: 'white',
-                },
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'white',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'white',
-                },
-                '& .MuiSvgIcon-root': {
-                  color: 'white',
-                },
-              }}
-              renderValue={(selected) => selected}
-            >
-              {textureOptions.map((textureOption) => (
-                <MenuItem
-                  key={textureOption}
-                  value={textureOption}
-                  style={getStyles(textureOption, texture, theme)}
-                >
-                  {textureOption}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </div>
+         </div>
 
         <TextField
           value={text}
@@ -225,21 +188,42 @@ export default function Home() {
           <Button
             onClick={() => handleAnimationChange('textMesh')}
             variant="contained"
-            color={selectedAnimation === 'textMesh' ? 'primary' : 'default'}
+            sx={{
+              backgroundColor: selectedAnimation === 'textMesh' ? 'white' : 'black',
+              color: selectedAnimation === 'textMesh' ? 'black' : 'white',
+              '&:hover': {
+                backgroundColor: 'white',
+                color: 'black',
+              },
+            }}
           >
             Text Mesh
           </Button>
           <Button
             onClick={() => handleAnimationChange('triangleMesh')}
             variant="contained"
-            color={selectedAnimation === 'triangleMesh' ? 'primary' : 'default'}
+            sx={{
+              backgroundColor: selectedAnimation === 'triangleMesh' ? 'white' : 'black',
+              color: selectedAnimation === 'triangleMesh' ? 'black' : 'white',
+              '&:hover': {
+                backgroundColor: 'white',
+                color: 'black',
+              },
+            }}
           >
             Triangle Mesh
           </Button>
           <Button
             onClick={() => handleAnimationChange('pointCloud')}
             variant="contained"
-            color={selectedAnimation === 'pointCloud' ? 'primary' : 'default'}
+            sx={{
+              backgroundColor: selectedAnimation === 'pointCloud' ? 'white' : 'black',
+              color: selectedAnimation === 'pointCloud' ? 'black' : 'white',
+              '&:hover': {
+                backgroundColor: 'white',
+                color: 'black',
+              },
+            }}
           >
             Point Cloud
           </Button>

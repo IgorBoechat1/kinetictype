@@ -61,8 +61,7 @@ const Scene: React.FC<SceneProps> = ({
             text={text}
             color={color}
             displacementIntensity={displacementIntensity}
-            scalingIntensity={scalingIntensity}
-            rotationIntensity={rotationIntensity}
+  
             waveIntensity={waveIntensity}
             isMicActive={isMicActive}
             font={font}

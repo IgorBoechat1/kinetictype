@@ -24,8 +24,6 @@ interface TextProps {
   text: string;
   color: THREE.Color;
   displacementIntensity: number;
-  scalingIntensity: number;
-  rotationIntensity: number;
   waveIntensity: number;
   isMicActive: boolean;
   font: keyof typeof fontFiles;
@@ -35,17 +33,12 @@ function easeInOutCubic(t: number): number {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
-function TextMesh({ text, color, displacementIntensity, scalingIntensity, rotationIntensity, waveIntensity, isMicActive, font }: TextProps) {
+function TextMesh({ text, color, displacementIntensity, waveIntensity, isMicActive, font }: TextProps) {
   const groupRef = useRef<THREE.Group>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const dataArrayRef = useRef<Uint8Array | null>(null);
   const clock = new THREE.Clock();
-  const { size, camera, scene } = useThree();
-  const attractors = useRef<THREE.Vector3[]>([
-    new THREE.Vector3(-1, 0, 0),
-    new THREE.Vector3(1, 0, -0.5),
-    new THREE.Vector3(0, 0.5, 1),
-  ]);
+  const { scene } = useThree();
 
   useEffect(() => {
     const loader = new FontLoader();
@@ -69,66 +62,8 @@ function TextMesh({ text, color, displacementIntensity, scalingIntensity, rotati
         geometry.boundingBox?.getCenter(center);
         geometry.translate(-center.x, -center.y, -center.z);
 
-        const positionAttribute = geometry.getAttribute('position') as THREE.BufferAttribute;
-        const numVertices = positionAttribute.count;
-        const positions = new Float32Array(numVertices * 3 * 2); // Adjust size for additional points
-        const indices = geometry.getIndex(); // Access face indices
-
-        // Add vertices
-        for (let i = 0; i < numVertices; i++) {
-          const x = positionAttribute.getX(i);
-          const y = positionAttribute.getY(i);
-          const z = positionAttribute.getZ(i);
-          positions.set([x, y, z], i * 3);
-        }
-
-        if (indices) {
-          for (let i = 0; i < indices.count; i += 3) {
-            const a = indices.getX(i);
-            const b = indices.getX(i + 1);
-            const c = indices.getX(i + 2);
-
-            const vA = new THREE.Vector3(
-              positionAttribute.getX(a),
-              positionAttribute.getY(a),
-              positionAttribute.getZ(a)
-            );
-
-            const vB = new THREE.Vector3(
-              positionAttribute.getX(b),
-              positionAttribute.getY(b),
-              positionAttribute.getZ(b)
-            );
-
-            const vC = new THREE.Vector3(
-              positionAttribute.getX(c),
-              positionAttribute.getY(c),
-              positionAttribute.getZ(c)
-            );
-
-            // Generate points inside the triangle
-            for (let j = 0; j < 3; j++) {  // Change `3` to increase density
-              const r1 = Math.random();
-              const r2 = Math.random();
-              const sqrtR1 = Math.sqrt(r1);
-
-              // Barycentric coordinates
-              const newX = (1 - sqrtR1) * vA.x + (sqrtR1 * (1 - r2)) * vB.x + (sqrtR1 * r2) * vC.x;
-              const newY = (1 - sqrtR1) * vA.y + (sqrtR1 * (1 - r2)) * vB.y + (sqrtR1 * r2) * vC.y;
-              const newZ = (1 - sqrtR1) * vA.z + (sqrtR1 * (1 - r2)) * vB.z + (sqrtR1 * r2) * vC.z;
-
-              positions.set([newX, newY, newZ], (numVertices + i + j) * 3);
-            }
-          }
-        }
-
-        const lineGeometry = new THREE.BufferGeometry();
-        lineGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        const initialPosition = lineGeometry.attributes.position.clone();
-        lineGeometry.setAttribute('initialPosition', initialPosition);
-
-        const material = new THREE.LineBasicMaterial({ color });
-        const lines = new THREE.LineSegments(lineGeometry, material);
+        const material = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.5 });
+        const lines = new THREE.LineSegments(geometry, material);
         groupRef.current.add(lines);
         scene.add(groupRef.current);
       }
@@ -159,7 +94,7 @@ function TextMesh({ text, color, displacementIntensity, scalingIntensity, rotati
     return () => {
       audioContext.close();
     };
-  }, [text, color, displacementIntensity, scalingIntensity, waveIntensity, isMicActive, font, scene]);
+  }, [text, color, displacementIntensity, waveIntensity, isMicActive, font, scene]);
 
   useFrame(() => {
     if (groupRef.current && analyserRef.current && dataArrayRef.current) {
@@ -173,38 +108,15 @@ function TextMesh({ text, color, displacementIntensity, scalingIntensity, rotati
         const lines = child as THREE.LineSegments;
         const geometry = lines.geometry as THREE.BufferGeometry;
         const positionAttribute = geometry.getAttribute('position') as THREE.BufferAttribute;
-        const initialPositionAttribute = geometry.getAttribute('initialPosition') as THREE.BufferAttribute;
+        const initialPosition = positionAttribute.clone();
 
         for (let i = 0; i < positionAttribute.count; i++) {
-          const x = initialPositionAttribute.getX(i);
-          const y = initialPositionAttribute.getY(i);
-          const z = initialPositionAttribute.getZ(i);
+          const x = initialPosition.getX(i);
+          const y = initialPosition.getY(i);
+          const z = initialPosition.getZ(i);
 
-          // Apply random displacement to vertices
-          positionAttribute.setXYZ(
-            i,
-            x + (Math.random() - 0.5) * displacementIntensity * t,
-            y + (Math.random() - 0.5) * displacementIntensity * t,
-            z + (Math.random() - 0.5) * displacementIntensity * t
-          );
-        }
-        positionAttribute.needsUpdate = true;
-
-        // Apply attractor forces to lines
-        for (let i = 0; i < positionAttribute.count; i++) {
-          const x = positionAttribute.getX(i);
-          const y = positionAttribute.getY(i);
-          const z = positionAttribute.getZ(i);
-          const position = new THREE.Vector3(x, y, z);
-
-          attractors.current.forEach((attractor) => {
-            const direction = attractor.clone().sub(position).normalize();
-            const distance = attractor.distanceTo(position);
-            const force = direction.multiplyScalar(1 / (distance * distance));
-            position.add(force.multiplyScalar(t * waveIntensity));
-          });
-
-          positionAttribute.setXYZ(i, position.x, position.y, position.z);
+          const waveEffect = Math.sin(time + i * 0.1) * waveIntensity * easedT;
+          positionAttribute.setXYZ(i, x + waveEffect, y + waveEffect, z + waveEffect);
         }
         positionAttribute.needsUpdate = true;
       });
