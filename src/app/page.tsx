@@ -61,9 +61,9 @@ export default function Home() {
     setTexture(event.target.value as TextureOption);
   };
 
-  if (!showApp) {
-    return <Welcome onStart={() => setShowApp(true)} />;
-  }
+  //if (!showApp) {
+    //return <Welcome onStart={() => setShowApp(true)} />;
+  //}
 
   return (
     <section className="flex flex-col items-center justify-center min-h-screen bg-black text-white font-primary p-4 sm:p-8">

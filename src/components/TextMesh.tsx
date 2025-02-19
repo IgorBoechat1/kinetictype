@@ -41,6 +41,11 @@ function TextMesh({ text, color, displacementIntensity, scalingIntensity, rotati
   const dataArrayRef = useRef<Uint8Array | null>(null);
   const clock = new THREE.Clock();
   const { size, camera, scene } = useThree();
+  const attractors = useRef<THREE.Vector3[]>([
+    new THREE.Vector3(-1, 0, 0),
+    new THREE.Vector3(1, 0, -0.5),
+    new THREE.Vector3(0, 0.5, 1),
+  ]);
 
   useEffect(() => {
     const loader = new FontLoader();
@@ -60,32 +65,71 @@ function TextMesh({ text, color, displacementIntensity, scalingIntensity, rotati
         });
 
         geometry.computeBoundingBox();
-        geometry.computeBoundingSphere();
+        const center = new THREE.Vector3();
+        geometry.boundingBox?.getCenter(center);
+        geometry.translate(-center.x, -center.y, -center.z);
 
-        const boundingBox = geometry.boundingBox;
-        const pointsGeometry = new THREE.BufferGeometry();
-        const numPoints = 5000; // Reduced number of points for better performance
-        const positions = new Float32Array(numPoints * 3);
+        const positionAttribute = geometry.getAttribute('position') as THREE.BufferAttribute;
+        const numVertices = positionAttribute.count;
+        const positions = new Float32Array(numVertices * 3 * 2); // Adjust size for additional points
+        const indices = geometry.getIndex(); // Access face indices
 
-        if (boundingBox) {
-          for (let i = 0; i < numPoints; i++) {
-            let x, y, z;
-            let point;
-            do {
-              x = THREE.MathUtils.randFloat(boundingBox.min.x, boundingBox.max.x);
-              y = THREE.MathUtils.randFloat(boundingBox.min.y, boundingBox.max.y);
-              z = THREE.MathUtils.randFloat(boundingBox.min.z, boundingBox.max.z);
-              point = new THREE.Vector3(x, y, z);
-            } while (!isPointInsideGeometry(point, geometry));
-            positions.set([x, y, z], i * 3);
+        // Add vertices
+        for (let i = 0; i < numVertices; i++) {
+          const x = positionAttribute.getX(i);
+          const y = positionAttribute.getY(i);
+          const z = positionAttribute.getZ(i);
+          positions.set([x, y, z], i * 3);
+        }
+
+        if (indices) {
+          for (let i = 0; i < indices.count; i += 3) {
+            const a = indices.getX(i);
+            const b = indices.getX(i + 1);
+            const c = indices.getX(i + 2);
+
+            const vA = new THREE.Vector3(
+              positionAttribute.getX(a),
+              positionAttribute.getY(a),
+              positionAttribute.getZ(a)
+            );
+
+            const vB = new THREE.Vector3(
+              positionAttribute.getX(b),
+              positionAttribute.getY(b),
+              positionAttribute.getZ(b)
+            );
+
+            const vC = new THREE.Vector3(
+              positionAttribute.getX(c),
+              positionAttribute.getY(c),
+              positionAttribute.getZ(c)
+            );
+
+            // Generate points inside the triangle
+            for (let j = 0; j < 3; j++) {  // Change `3` to increase density
+              const r1 = Math.random();
+              const r2 = Math.random();
+              const sqrtR1 = Math.sqrt(r1);
+
+              // Barycentric coordinates
+              const newX = (1 - sqrtR1) * vA.x + (sqrtR1 * (1 - r2)) * vB.x + (sqrtR1 * r2) * vC.x;
+              const newY = (1 - sqrtR1) * vA.y + (sqrtR1 * (1 - r2)) * vB.y + (sqrtR1 * r2) * vC.y;
+              const newZ = (1 - sqrtR1) * vA.z + (sqrtR1 * (1 - r2)) * vB.z + (sqrtR1 * r2) * vC.z;
+
+              positions.set([newX, newY, newZ], (numVertices + i + j) * 3);
+            }
           }
         }
 
-        pointsGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const lineGeometry = new THREE.BufferGeometry();
+        lineGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const initialPosition = lineGeometry.attributes.position.clone();
+        lineGeometry.setAttribute('initialPosition', initialPosition);
 
-        const material = new THREE.PointsMaterial({ color, size: 0.05 });
-        const points = new THREE.Points(pointsGeometry, material);
-        groupRef.current.add(points);
+        const material = new THREE.LineBasicMaterial({ color });
+        const lines = new THREE.LineSegments(lineGeometry, material);
+        groupRef.current.add(lines);
         scene.add(groupRef.current);
       }
     });
@@ -123,17 +167,44 @@ function TextMesh({ text, color, displacementIntensity, scalingIntensity, rotati
       const avgFrequency = dataArrayRef.current.reduce((a, b) => a + b, 0) / dataArrayRef.current.length;
       const t = avgFrequency / 256;
       const easedT = easeInOutCubic(t);
+      const time = clock.getElapsedTime();
 
       groupRef.current.children.forEach((child) => {
-        const points = child as THREE.Points;
-        const geometry = points.geometry as THREE.BufferGeometry;
+        const lines = child as THREE.LineSegments;
+        const geometry = lines.geometry as THREE.BufferGeometry;
         const positionAttribute = geometry.getAttribute('position') as THREE.BufferAttribute;
+        const initialPositionAttribute = geometry.getAttribute('initialPosition') as THREE.BufferAttribute;
 
+        for (let i = 0; i < positionAttribute.count; i++) {
+          const x = initialPositionAttribute.getX(i);
+          const y = initialPositionAttribute.getY(i);
+          const z = initialPositionAttribute.getZ(i);
+
+          // Apply random displacement to vertices
+          positionAttribute.setXYZ(
+            i,
+            x + (Math.random() - 0.5) * displacementIntensity * t,
+            y + (Math.random() - 0.5) * displacementIntensity * t,
+            z + (Math.random() - 0.5) * displacementIntensity * t
+          );
+        }
+        positionAttribute.needsUpdate = true;
+
+        // Apply attractor forces to lines
         for (let i = 0; i < positionAttribute.count; i++) {
           const x = positionAttribute.getX(i);
           const y = positionAttribute.getY(i);
           const z = positionAttribute.getZ(i);
-          positionAttribute.setXYZ(i, x, y, z);
+          const position = new THREE.Vector3(x, y, z);
+
+          attractors.current.forEach((attractor) => {
+            const direction = attractor.clone().sub(position).normalize();
+            const distance = attractor.distanceTo(position);
+            const force = direction.multiplyScalar(1 / (distance * distance));
+            position.add(force.multiplyScalar(t * waveIntensity));
+          });
+
+          positionAttribute.setXYZ(i, position.x, position.y, position.z);
         }
         positionAttribute.needsUpdate = true;
       });
@@ -141,14 +212,6 @@ function TextMesh({ text, color, displacementIntensity, scalingIntensity, rotati
   });
 
   return <group ref={groupRef} />;
-}
-
-function isPointInsideGeometry(point: THREE.Vector3, geometry: THREE.BufferGeometry): boolean {
-  const raycaster = new THREE.Raycaster();
-  const direction = new THREE.Vector3(1, 0, 0);
-  raycaster.set(point, direction);
-  const intersects = raycaster.intersectObject(new THREE.Mesh(geometry));
-  return intersects.length % 2 === 1;
 }
 
 export default TextMesh;
