@@ -33,6 +33,7 @@ interface SceneProps {
   font: keyof typeof fontFiles;
   texture: string;
   showTextMesh: boolean;
+  showTriangleMesh: boolean;
   showPointCloud: boolean;
 }
 

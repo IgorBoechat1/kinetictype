@@ -37,8 +37,7 @@ function getStyles(name: string, selectedName: string, theme: Theme) {
 
 export default function Home() {
   const [showApp, setShowApp] = useState(false);
-  const [showTextMesh, setShowTextMesh] = useState(true);
-  const [showPointCloud, setShowPointCloud] = useState(false);
+  const [selectedAnimation, setSelectedAnimation] = useState<'textMesh' | 'triangleMesh' | 'pointCloud'>('textMesh');
 
   const [text, setText] = useState('TYPE');
   const [color, setColor] = useState(new THREE.Color('#FFFFFF'));
@@ -61,9 +60,9 @@ export default function Home() {
     setTexture(event.target.value as TextureOption);
   };
 
-  //if (!showApp) {
-    //return <Welcome onStart={() => setShowApp(true)} />;
-  //}
+  const handleAnimationChange = (animation: 'textMesh' | 'triangleMesh' | 'pointCloud') => {
+    setSelectedAnimation(animation);
+  };
 
   return (
     <section className="flex flex-col items-center justify-center min-h-screen bg-black text-white font-primary p-4 sm:p-8">
@@ -185,7 +184,7 @@ export default function Home() {
                 min={0}
                 max={10}
                 step={0.1}
-                onChange={(e, newValue) => setter(newValue as number)}
+                onChange={(e: Event, newValue: number | number[]) => setter(newValue as number)}
                 aria-label={label}
                 valueLabelDisplay="auto"
                 sx={{ color: 'white' }}
@@ -205,8 +204,9 @@ export default function Home() {
             isMicActive={isMicActive}
             font={font}
             texture={texture}
-            showTextMesh={showTextMesh}
-            showPointCloud={showPointCloud}
+            showTextMesh={selectedAnimation === 'textMesh'}
+            showTriangleMesh={selectedAnimation === 'triangleMesh'}
+            showPointCloud={selectedAnimation === 'pointCloud'}
           />
         </div>
       </div>
@@ -223,18 +223,25 @@ export default function Home() {
             <MicIcon sx={{ color: 'white' }} />
           </IconButton>
           <Button
-            onClick={() => setShowTextMesh(!showTextMesh)}
+            onClick={() => handleAnimationChange('textMesh')}
             variant="contained"
-            color="primary"
+            color={selectedAnimation === 'textMesh' ? 'primary' : 'default'}
           >
-            Toggle Mesh
+            Text Mesh
           </Button>
           <Button
-            onClick={() => setShowPointCloud(!showPointCloud)}
+            onClick={() => handleAnimationChange('triangleMesh')}
             variant="contained"
-            color="secondary"
+            color={selectedAnimation === 'triangleMesh' ? 'primary' : 'default'}
           >
-            Toggle Point Cloud
+            Triangle Mesh
+          </Button>
+          <Button
+            onClick={() => handleAnimationChange('pointCloud')}
+            variant="contained"
+            color={selectedAnimation === 'pointCloud' ? 'primary' : 'default'}
+          >
+            Point Cloud
           </Button>
         </Stack>
       </div>
