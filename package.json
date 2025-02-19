@@ -22,6 +22,7 @@
     "@react-three/drei": "^9.56.0",
     "gsap": "^3.12.7",
     "heroui-cli": "^1.0.0",
+    "lil-gui": "^0.20.0",
     "load-bmfont": "^1.4.2",
     "next": "^13.4.1",
     "react": "^18.2.0",

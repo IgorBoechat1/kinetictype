@@ -3,7 +3,8 @@ import React, { useRef, useEffect } from 'react';
 import * as THREE from 'three';
 import { FontLoader, Font } from 'three-stdlib';
 import { TextGeometry } from 'three-stdlib';
-import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
+import { GUI } from 'lil-gui';
+
 
 const ThreeScene: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
