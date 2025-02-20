@@ -3,7 +3,6 @@ import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import * as THREE from 'three';
 import 'tailwindcss/tailwind.css';
-import Welcome from '../components/WelcomeScreen';
 import { Slider, FormControl, InputLabel, MenuItem, Select, OutlinedInput, SelectChangeEvent, Stack, IconButton, TextField, Button } from '@mui/material';
 import MicIcon from '@mui/icons-material/Mic';
 import { Theme, useTheme } from '@mui/material/styles';
@@ -11,10 +10,8 @@ import { Theme, useTheme } from '@mui/material/styles';
 const Scene = dynamic(() => import('../components/Scene'), { ssr: false });
 
 const fontOptions = ['Playfair', 'Monigue', 'Cocogoose', 'Bodoni', 'AfterShok', 'DinerFat', 'db', 'FancyPants', 'Batuphat', 'Barrio', 'Seaside'] as const;
-const textureOptions = ['Mirror', 'Glass', 'Lines', 'Fragment', 'Random', 'Standard', 'Poser', 'Pavoi', 'Loco'] as const;
 
 type FontOption = typeof fontOptions[number];
-type TextureOption = typeof textureOptions[number];
 
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
@@ -48,16 +45,12 @@ export default function Home() {
   const [fragmentationIntensity, setFragmentationIntensity] = useState(1);
   const [isMicActive, setIsMicActive] = useState(false);
   const [font, setFont] = useState<FontOption>('Bodoni');
-  const [texture, setTexture] = useState<TextureOption>('Mirror');
+  const [useShader, setUseShader] = useState(false);
 
   const theme = useTheme();
 
   const handleFontChange = (event: SelectChangeEvent<FontOption>) => {
     setFont(event.target.value as FontOption);
-  };
-
-  const handleTextureChange = (event: SelectChangeEvent<TextureOption>) => {
-    setTexture(event.target.value as TextureOption);
   };
 
   const handleAnimationChange = (animation: 'textMesh' | 'triangleMesh' | 'pointCloud') => {
@@ -156,7 +149,7 @@ export default function Home() {
           ))}
         </div>
         <div className="relative w-full flex-grow">
-          <Scene
+          <Scene 
             text={text}
             color={color}
             displacementIntensity={displacementIntensity}
@@ -165,11 +158,12 @@ export default function Home() {
             waveIntensity={waveIntensity}
             fragmentationIntensity={fragmentationIntensity}
             isMicActive={isMicActive}
+            texture='/textures/image.jpg'
             font={font}
-            texture={texture}
             showTextMesh={selectedAnimation === 'textMesh'}
             showTriangleMesh={selectedAnimation === 'triangleMesh'}
             showPointCloud={selectedAnimation === 'pointCloud'}
+            useShader={useShader}
           />
         </div>
       </div>
@@ -226,6 +220,21 @@ export default function Home() {
             }}
           >
             Point Cloud
+          </Button>
+          
+          <Button
+            onClick={() => setUseShader(!useShader)}
+            variant="contained"
+            sx={{
+              backgroundColor: useShader ? 'white' : 'black',
+              color: useShader ? 'black' : 'white',
+              '&:hover': {
+                backgroundColor: 'white',
+                color: 'black',
+              },
+            }}
+          >
+            Toggle Shader
           </Button>
         </Stack>
       </div>

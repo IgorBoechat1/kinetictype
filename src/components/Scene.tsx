@@ -36,6 +36,7 @@ interface SceneProps {
   showTextMesh: boolean;
   showTriangleMesh: boolean;
   showPointCloud: boolean;
+  useShader: boolean;
 }
 
 const Scene: React.FC<SceneProps> = ({
@@ -48,6 +49,7 @@ const Scene: React.FC<SceneProps> = ({
   fragmentationIntensity,
   isMicActive,
   font,
+  useShader,
   texture,
   showTextMesh,
   showTriangleMesh,
@@ -60,10 +62,10 @@ const Scene: React.FC<SceneProps> = ({
         shadows // Enable shadows in the renderer
         camera={{ position: [0, 0, 10], fov: 50 }}
       >
-        <ambientLight intensity={0.5} />
+        <ambientLight intensity={1} />
         <directionalLight
           position={[10, 10, 10]}
-          intensity={1}
+          intensity={12}
           castShadow // Enable shadow casting for the light
           shadow-mapSize-width={1024}
           shadow-mapSize-height={1024}
@@ -80,6 +82,7 @@ const Scene: React.FC<SceneProps> = ({
             displacementIntensity={displacementIntensity}
             waveIntensity={waveIntensity}
             isMicActive={isMicActive}
+            useShader={useShader}
             font={font}
             scalingIntensity={scalingIntensity}
           />
