@@ -1,16 +1,16 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
+import vertexShader from '../shaders/vertex.glsl';
+import fragmentShader from '../shaders/fragment.glsl';
 
 interface TriangleMeshProps {
   color: THREE.Color;
   isMicActive: boolean;
-  showPointCloud: boolean;
   displacementIntensity: number;
   scalingIntensity: number;
   rotationIntensity: number;
   waveIntensity: number;
-  fragmentationIntensity: number;
 }
 
 function easeInOutCubic(t: number): number {
@@ -20,22 +20,17 @@ function easeInOutCubic(t: number): number {
 const TriangleMesh: React.FC<TriangleMeshProps> = ({
   color,
   isMicActive,
-  showPointCloud,
   displacementIntensity,
   scalingIntensity,
   rotationIntensity,
   waveIntensity,
-  fragmentationIntensity,
 }) => {
   const groupRef = useRef<THREE.Group>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const dataArrayRef = useRef<Uint8Array | null>(null);
   const clock = new THREE.Clock();
-  const attractors = useRef<THREE.Vector3[]>([
-    new THREE.Vector3(-1, 0, 0),
-    new THREE.Vector3(1, 0, -0.5),
-    new THREE.Vector3(0, 0.5, 1),
-  ]);
+  const { size, viewport } = useThree();
+  const [mouse, setMouse] = useState(new THREE.Vector2());
 
   useEffect(() => {
     // Set up audio context and analyser
@@ -68,54 +63,71 @@ const TriangleMesh: React.FC<TriangleMeshProps> = ({
     if (groupRef.current) {
       groupRef.current.clear();
 
-      if (!showPointCloud) {
-        // Create multiple triangles
-        for (let i = 0; i < 5; i++) {
-          const triangleGeometry = new THREE.BufferGeometry();
-          const vertices = new Float32Array([
-            Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1,
-            Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1,
-            Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1,
-          ]);
-          triangleGeometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-          const initialPosition = triangleGeometry.attributes.position.clone();
-          triangleGeometry.setAttribute('initialPosition', initialPosition);
+      // Create multiple shapes
+      for (let i = 0; i < 5; i++) {
+        // Create geometry (cube, cylinder, pyramid, or sphere)
+        const geometry = (() => {
+          switch (Math.floor(Math.random() * 4)) {
+            case 0:
+              return new THREE.BoxGeometry(1, 1, 1, 20, 20, 20); // Cube
+            case 1:
+              return new THREE.CylinderGeometry(1, 1, 4, 64, 64, true); // Cylinder
+            case 2:
+              return new THREE.ConeGeometry(1, 2, 32, 32); // Pyramid
+            case 3:
+              return new THREE.SphereGeometry(1, 32, 32); // Sphere
+            default:
+              return new THREE.BoxGeometry(1, 1, 1, 20, 20, 20); // Default to Cube
+          }
+        })();
 
-          const triangleMaterial = new THREE.MeshBasicMaterial({
-            color: color,
-            side: THREE.DoubleSide,
-            wireframe: true,
-            wireframeLinewidth: 1,
-            wireframeLinecap: 'round',
-            wireframeLinejoin: 'round',
-          });
-          const triangleMesh = new THREE.Mesh(triangleGeometry, triangleMaterial);
-          triangleMesh.userData.velocity = new THREE.Vector3(Math.random() * 0.02 - 0.01, Math.random() * 0.02 - 0.01, Math.random() * 0.02 - 0.01);
-          groupRef.current.add(triangleMesh);
-        }
-      } else {
-        // Create organic shape point cloud
-        const pointCount = 10000;
-        const pointGeometry = new THREE.BufferGeometry();
-        const pointVertices = new Float32Array(pointCount * 3);
-        for (let i = 0; i < pointCount; i++) {
-          const theta = Math.random() * 2 * Math.PI;
-          const phi = Math.acos(2 * Math.random() - 1);
-          const r = Math.cbrt(Math.random());
-          pointVertices[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-          pointVertices[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-          pointVertices[i * 3 + 2] = r * Math.cos(phi);
-        }
-        pointGeometry.setAttribute('position', new THREE.BufferAttribute(pointVertices, 3));
-        const initialPosition = pointGeometry.attributes.position.clone();
-        pointGeometry.setAttribute('initialPosition', initialPosition);
+        // Store initial positions
+        const initialPosition = geometry.attributes.position.clone();
+        geometry.setAttribute('initialPosition', initialPosition);
 
-        const pointMaterial = new THREE.PointsMaterial({ color: color, size: 0.01 });
-        const pointCloud = new THREE.Points(pointGeometry, pointMaterial);
-        groupRef.current.add(pointCloud);
+        // Create custom shader material
+        const material = new THREE.ShaderMaterial({
+          side: THREE.DoubleSide,
+          vertexShader: vertexShader,
+          fragmentShader: fragmentShader,
+          transparent: true,
+          uniforms: {
+            time: { value: 0 },
+            offsetSize: { value: 2 },
+            size: { value: 2 },
+            frequency: { value: 2 },
+            amplitude: { value: 0.8 },
+            offsetGain: { value: 0.5 },
+            maxDistance: { value: 1.8 },
+            startColor: { value: new THREE.Color(0xff00ff) },
+            endColor: { value: new THREE.Color(0x00ffff) },
+            attractorPosition: { value: new THREE.Vector3() },
+            soundIntensity: { value: 0 },
+            mousePosition: { value: new THREE.Vector2() },
+          },
+        });
+
+        const mesh = new THREE.Points(geometry, material);
+        mesh.castShadow = true; // Enable shadow casting
+        mesh.receiveShadow = true; // Enable shadow receiving
+        mesh.userData.velocity = new THREE.Vector3(Math.random() * 0.02 - 0.01, Math.random() * 0.02 - 0.01, Math.random() * 0.02 - 0.01);
+        groupRef.current.add(mesh);
       }
     }
-  }, [color, showPointCloud]);
+  }, [color]);
+
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      const x = (event.clientX / size.width) * 2 - 1;
+      const y = -(event.clientY / size.height) * 2 + 1;
+      setMouse(new THREE.Vector2(x, y));
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [size]);
 
   useFrame(() => {
     if (groupRef.current && analyserRef.current && dataArrayRef.current) {
@@ -125,30 +137,40 @@ const TriangleMesh: React.FC<TriangleMeshProps> = ({
       const easedT = easeInOutCubic(t);
       const time = clock.getElapsedTime();
 
-      groupRef.current.children.forEach((child, index) => {
-        const mesh = child as THREE.Mesh | THREE.Points;
+      groupRef.current.children.forEach((child) => {
+        const mesh = child as THREE.Points;
         const geometry = mesh.geometry as THREE.BufferGeometry;
         const positionAttribute = geometry.getAttribute('position') as THREE.BufferAttribute;
         const initialPositionAttribute = geometry.getAttribute('initialPosition') as THREE.BufferAttribute;
 
         // Update position based on velocity if it's a mesh
-        if (child.type === 'Mesh') {
-          const velocity = mesh.userData.velocity as THREE.Vector3;
-          mesh.position.add(velocity);
+        const velocity = mesh.userData.velocity as THREE.Vector3;
+        mesh.position.add(velocity);
 
-          // Ensure the triangles stay within bounds
-          if (mesh.position.x < -1 || mesh.position.x > 1) velocity.x = -velocity.x;
-          if (mesh.position.y < -1 || mesh.position.y > 1) velocity.y = -velocity.y;
-          if (mesh.position.z < -1 || mesh.position.z > 1) velocity.z = -velocity.z;
+        // Ensure the shapes stay within bounds
+        if (mesh.position.x < -1 || mesh.position.x > 1) velocity.x = -velocity.x;
+        if (mesh.position.y < -1 || mesh.position.y > 1) velocity.y = -velocity.y;
+        if (mesh.position.z < -1 || mesh.position.z > 1) velocity.z = -velocity.z;
 
-          // Apply rotation
-          mesh.rotation.x += rotationIntensity * 0.01;
-          mesh.rotation.y += rotationIntensity * 0.01;
+        // Apply rotation with acceleration based on sound intensity
+        const rotationSpeed = rotationIntensity * 0.01 * t;
+        mesh.rotation.x += rotationSpeed;
+        mesh.rotation.y += rotationSpeed;
 
-          // Apply scale based on sound data
-          const scale = 1 + t * scalingIntensity * 0.3;
-          mesh.scale.set(scale, scale, scale);
-        }
+        // Apply scale based on sound data
+        const scale = 1 + t * scalingIntensity * 0.3;
+        mesh.scale.set(scale, scale, scale);
+
+        // Update shader uniforms
+        const material = mesh.material as THREE.ShaderMaterial;
+        material.uniforms.time.value = time;
+        material.uniforms.soundIntensity.value = t;
+        material.uniforms.attractorPosition.value.set(
+          Math.sin(time) * 2,
+          Math.cos(time) * 2,
+          Math.sin(time) * 2
+        );
+        material.uniforms.mousePosition.value.copy(mouse);
 
         // Morph vertices based on sound data
         for (let i = 0; i < positionAttribute.count; i++) {
@@ -165,26 +187,6 @@ const TriangleMesh: React.FC<TriangleMeshProps> = ({
           );
         }
         positionAttribute.needsUpdate = true;
-
-        // Apply attractor forces to point cloud
-        if (child.type === 'Points') {
-          for (let i = 0; i < positionAttribute.count; i++) {
-            const x = positionAttribute.getX(i);
-            const y = positionAttribute.getY(i);
-            const z = positionAttribute.getZ(i);
-            const position = new THREE.Vector3(x, y, z);
-
-            attractors.current.forEach((attractor) => {
-              const direction = attractor.clone().sub(position).normalize();
-              const distance = attractor.distanceTo(position);
-              const force = direction.multiplyScalar(1 / (distance * distance));
-              position.add(force.multiplyScalar(t * waveIntensity));
-            });
-
-            positionAttribute.setXYZ(i, position.x, position.y, position.z);
-          }
-          positionAttribute.needsUpdate = true;
-        }
       });
     }
   });

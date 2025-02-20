@@ -1,4 +1,3 @@
-const vertexShader = `
 varying float vDistance;
 
 uniform float time;
@@ -8,6 +7,9 @@ uniform float offsetGain;
 uniform float amplitude;
 uniform float frequency;
 uniform float maxDistance;
+uniform vec3 attractorPosition;
+uniform float soundIntensity;
+uniform vec2 mousePosition;
 
 vec3 mod289(vec3 x){
   return x-floor(x*(1./289.))*289.;
@@ -107,18 +109,26 @@ vec3 curl(float x,float y,float z) {
 
 void main() {
   vec3 newpos = position;
-  vec3 target = position + (normal*.1) + curl(newpos.x * frequency, newpos.y * frequency, newpos.z * frequency) * amplitude;
-  
+  vec3 target = position + (normal * 0.1) + curl(newpos.x * frequency, newpos.y * frequency, newpos.z * frequency) * amplitude;
+
+  // Add waves reacting to sound
+  target += normal * sin(time * frequency + length(position) * 10.0) * soundIntensity;
+
+  // Add moving attractor
+  vec3 attractorDir = normalize(attractorPosition - position);
+  target += attractorDir * 0.1;
+
+  // Add mouse repulsion
+  vec3 mouseDir = normalize(vec3(mousePosition, 0.0) - position);
+  target -= mouseDir * 0.5;
+
   float d = length(newpos - target) / maxDistance;
   newpos = mix(position, target, pow(d, 4.));
-  newpos.z += sin(time) * (.1 * offsetGain);
-  
-  vec4 mvPosition = modelViewMatrix * vec4(newpos, 1.);
-  gl_PointSize = size + (pow(d,3.) * offsetSize) * (1./-mvPosition.z);
+  newpos.z += sin(time) * (0.1 * offsetGain);
+
+  vec4 mvPosition = modelViewMatrix * vec4(newpos, 1.0);
+  gl_PointSize = size + (pow(d, 3.0) * offsetSize) * (1.0 / -mvPosition.z);
   gl_Position = projectionMatrix * mvPosition;
-  
+
   vDistance = d;
 }
-`;
-
-export default vertexShader;

@@ -4,6 +4,7 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import TextMesh from './TextMesh';
 import TriangleMesh from './TriangleMesh';
+import PointCloud from './PointCloud';
 import * as THREE from 'three';
 
 const fontFiles = {
@@ -49,33 +50,54 @@ const Scene: React.FC<SceneProps> = ({
   font,
   texture,
   showTextMesh,
+  showTriangleMesh,
   showPointCloud,
 }) => {
   return (
     <div style={{ width: '100%', height: '100vh' }}>
-      <Canvas style={{ width: '100%', height: '100vh' }}>
+      <Canvas
+        style={{ width: '100%', height: '100vh' }}
+        shadows // Enable shadows in the renderer
+        camera={{ position: [0, 0, 10], fov: 50 }}
+      >
         <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} />
+        <directionalLight
+          position={[10, 10, 10]}
+          intensity={1}
+          castShadow // Enable shadow casting for the light
+          shadow-mapSize-width={1024}
+          shadow-mapSize-height={1024}
+          shadow-camera-far={50}
+          shadow-camera-left={-10}
+          shadow-camera-right={10}
+          shadow-camera-top={10}
+          shadow-camera-bottom={-10}
+        />
         {showTextMesh ? (
           <TextMesh
             text={text}
             color={color}
             displacementIntensity={displacementIntensity}
-  
             waveIntensity={waveIntensity}
             isMicActive={isMicActive}
             font={font}
+            scalingIntensity={scalingIntensity}
           />
-        ) : (
+        ) : showTriangleMesh ? (
           <TriangleMesh
             color={color}
             isMicActive={isMicActive}
-            showPointCloud={showPointCloud}
             displacementIntensity={displacementIntensity}
             scalingIntensity={scalingIntensity}
             rotationIntensity={rotationIntensity}
             waveIntensity={waveIntensity}
-            fragmentationIntensity={fragmentationIntensity}
+          />
+        ) : (
+          <PointCloud
+            color={color}
+            isMicActive={isMicActive}
+            displacementIntensity={displacementIntensity}
+            waveIntensity={waveIntensity}
           />
         )}
         <OrbitControls enableZoom={true} enablePan={true} />

@@ -1,73 +1,46 @@
 'use client';
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
 import { FontLoader, Font } from 'three-stdlib';
 import { TextGeometry } from 'three-stdlib';
-import { GUI } from 'lil-gui';
-
+import ThreeSceneControls from './ThreeSceneControls';
 
 const ThreeScene: React.FC = () => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const groupRef = useRef<THREE.Group>(new THREE.Group());
-  const cameraRef = useRef<THREE.PerspectiveCamera>();
-  const sceneRef = useRef<THREE.Scene>();
-  const rendererRef = useRef<THREE.WebGLRenderer>();
-  const textMesh1Ref = useRef<THREE.Mesh>();
-  const textMesh2Ref = useRef<THREE.Mesh>();
-  const textGeoRef = useRef<TextGeometry>();
-  const materialsRef = useRef<THREE.Material[]>([]);
-  const fontRef = useRef<Font>();
-  const pointLightRef = useRef<THREE.PointLight>();
+  const containerRef = useRef<HTMLDivElement>(null); // Reference to the container div
+  const groupRef = useRef<THREE.Group>(new THREE.Group()); // Reference to the group containing the text mesh
+  const cameraRef = useRef<THREE.PerspectiveCamera>(); // Reference to the camera
+  const sceneRef = useRef<THREE.Scene>(); // Reference to the scene
+  const rendererRef = useRef<THREE.WebGLRenderer>(); // Reference to the renderer
+  const textMesh1Ref = useRef<THREE.Mesh>(); // Reference to the first text mesh
+  const textMesh2Ref = useRef<THREE.Mesh>(); // Reference to the second text mesh (mirror)
+  const materialsRef = useRef<THREE.Material[]>([]); // Reference to the materials
+  const fontRef = useRef<Font>(); // Reference to the font
+  const pointLightRef = useRef<THREE.PointLight>(); // Reference to the point light
 
-  let firstLetter = true;
-  let text = 'three.js';
-  let bevelEnabled = true;
-  let fontName = 'optimer';
-  let fontWeight = 'bold';
+  const [text, setText] = useState('three.js'); // Initial text
+  const [targetRotation, setTargetRotation] = useState(0); // Target rotation for the group
+  const [targetRotationOnPointerDown, setTargetRotationOnPointerDown] = useState(0); // Target rotation on pointer down
+  const [pointerX, setPointerX] = useState(0); // Pointer X position
+  const [pointerXOnPointerDown, setPointerXOnPointerDown] = useState(0); // Pointer X position on pointer down
+  const [windowHalfX, setWindowHalfX] = useState(window.innerWidth / 2); // Half of the window width
 
-  const depth = 20;
-  const size = 70;
-  const hover = 30;
-  const curveSegments = 4;
-  const bevelThickness = 2;
-  const bevelSize = 1.5;
-  const mirror = true;
+  let bevelEnabled = true; // Flag to enable/disable bevel
+  let fontName = 'optimer'; // Initial font name
+  let fontWeight = 'bold'; // Initial font weight
 
-  const fontMap = {
-    helvetiker: 0,
-    optimer: 1,
-    gentilis: 2,
-    'droid/droid_sans': 3,
-    'droid/droid_serif': 4,
-  };
-
-  const weightMap = {
-    regular: 0,
-    bold: 1,
-  };
-
-  const reverseFontMap = Object.keys(fontMap).reduce((acc, key) => {
-    acc[fontMap[key as keyof typeof fontMap]] = key;
-    return acc;
-  }, {} as { [key: number]: string });
-
-  const reverseWeightMap = Object.keys(weightMap).reduce((acc, key) => {
-    acc[weightMap[key as keyof typeof weightMap]] = key;
-    return acc;
-  }, {} as { [key: number]: string });
-
-  let targetRotation = 0;
-  let targetRotationOnPointerDown = 0;
-  let pointerX = 0;
-  let pointerXOnPointerDown = 0;
-  let windowHalfX = window.innerWidth / 2;
-  let fontIndex = 1;
+  const depth = 20; // Depth of the text
+  const size = 70; // Size of the text
+  const hover = 30; // Hover effect for the text
+  const curveSegments = 4; // Number of curve segments
+  const bevelThickness = 2; // Thickness of the bevel
+  const bevelSize = 1.5; // Size of the bevel
+  const mirror = true; // Flag to enable/disable mirror effect
 
   useEffect(() => {
-    init();
+    init(); // Initialize the scene
     return () => {
       if (rendererRef.current) {
-        rendererRef.current.dispose();
+        rendererRef.current.dispose(); // Dispose the renderer on unmount
       }
     };
   }, []);
@@ -107,7 +80,7 @@ const ThreeScene: React.FC = () => {
     group.position.y = 100;
     scene.add(group);
 
-    loadFont();
+    loadFont(); // Load the font
 
     const plane = new THREE.Mesh(
       new THREE.PlaneGeometry(10000, 10000),
@@ -121,80 +94,21 @@ const ThreeScene: React.FC = () => {
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setAnimationLoop(animate);
+    renderer.setAnimationLoop(animate); // Set the animation loop
     container.appendChild(renderer.domElement);
     rendererRef.current = renderer;
-
-    // EVENTS
-    container.style.touchAction = 'none';
-    container.addEventListener('pointerdown', onPointerDown);
-
-    document.addEventListener('keypress', onDocumentKeyPress);
-    document.addEventListener('keydown', onDocumentKeyDown);
-
-    const params = {
-      changeColor: () => {
-        pointLight.color.setHSL(Math.random(), 1, 0.5);
-      },
-      changeFont: () => {
-        fontIndex++;
-        fontName = reverseFontMap[fontIndex % Object.keys(reverseFontMap).length];
-        loadFont();
-      },
-      changeWeight: () => {
-        fontWeight = fontWeight === 'bold' ? 'regular' : 'bold';
-        loadFont();
-      },
-      changeBevel: () => {
-        bevelEnabled = !bevelEnabled;
-        refreshText();
-      },
-    };
-
-    const gui = new GUI();
-    gui.add(params, 'changeColor').name('change color');
-    gui.add(params, 'changeFont').name('change font');
-    gui.add(params, 'changeWeight').name('change weight');
-    gui.add(params, 'changeBevel').name('change bevel');
-    gui.open();
 
     window.addEventListener('resize', onWindowResize);
   };
 
   const onWindowResize = () => {
-    windowHalfX = window.innerWidth / 2;
+    setWindowHalfX(window.innerWidth / 2);
     const camera = cameraRef.current;
     const renderer = rendererRef.current;
     if (camera && renderer) {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
-    }
-  };
-
-  const onDocumentKeyDown = (event: KeyboardEvent) => {
-    if (firstLetter) {
-      firstLetter = false;
-      text = '';
-    }
-
-    const keyCode = event.keyCode;
-    if (keyCode === 8) {
-      event.preventDefault();
-      text = text.substring(0, text.length - 1);
-      refreshText();
-      return false;
-    }
-  };
-
-  const onDocumentKeyPress = (event: KeyboardEvent) => {
-    const keyCode = event.which;
-    if (keyCode === 8) {
-      event.preventDefault();
-    } else {
-      const ch = String.fromCharCode(keyCode);
-      text += ch;
-      refreshText();
     }
   };
 
@@ -252,26 +166,6 @@ const ThreeScene: React.FC = () => {
     createText();
   };
 
-  const onPointerDown = (event: PointerEvent) => {
-    if (event.isPrimary === false) return;
-    pointerXOnPointerDown = event.clientX - windowHalfX;
-    targetRotationOnPointerDown = targetRotation;
-    document.addEventListener('pointermove', onPointerMove);
-    document.addEventListener('pointerup', onPointerUp);
-  };
-
-  const onPointerMove = (event: PointerEvent) => {
-    if (event.isPrimary === false) return;
-    pointerX = event.clientX - windowHalfX;
-    targetRotation = targetRotationOnPointerDown + (pointerX - pointerXOnPointerDown) * 0.02;
-  };
-
-  const onPointerUp = (event: PointerEvent) => {
-    if (event.isPrimary === false) return;
-    document.removeEventListener('pointermove', onPointerMove);
-    document.removeEventListener('pointerup', onPointerUp);
-  };
-
   const animate = () => {
     const group = groupRef.current;
     const camera = cameraRef.current;
@@ -285,7 +179,23 @@ const ThreeScene: React.FC = () => {
     }
   };
 
-  return <div ref={containerRef} style={{ width: '100%', height: '100vh' }} />;
+  return (
+    <div ref={containerRef} style={{ width: '100%', height: '100vh' }}>
+      <ThreeSceneControls
+        text={text}
+        setText={setText}
+        targetRotation={targetRotation}
+        setTargetRotation={setTargetRotation}
+        targetRotationOnPointerDown={targetRotationOnPointerDown}
+        setTargetRotationOnPointerDown={setTargetRotationOnPointerDown}
+        pointerX={pointerX}
+        setPointerX={setPointerX}
+        pointerXOnPointerDown={pointerXOnPointerDown}
+        setPointerXOnPointerDown={setPointerXOnPointerDown}
+        windowHalfX={windowHalfX}
+      />
+    </div>
+  );
 };
 
 export default ThreeScene;
