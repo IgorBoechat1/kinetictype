@@ -34,7 +34,7 @@ function getStyles(name: string, selectedName: string, theme: Theme) {
 
 export default function Home() {
   const [showApp, setShowApp] = useState(false);
-  const [selectedAnimation, setSelectedAnimation] = useState<'textMesh' | 'triangleMesh' | 'pointCloud'>('textMesh');
+  const [selectedAnimation, setSelectedAnimation] = useState<'textMesh' | 'triangleMesh' | 'pointCloud' | 'iridescent'>('textMesh');
 
   const [text, setText] = useState('TYPE');
   const [color, setColor] = useState(new THREE.Color('#FFFFFF'));
@@ -53,7 +53,7 @@ export default function Home() {
     setFont(event.target.value as FontOption);
   };
 
-  const handleAnimationChange = (animation: 'textMesh' | 'triangleMesh' | 'pointCloud') => {
+  const handleAnimationChange = (animation: 'textMesh' | 'triangleMesh' | 'pointCloud' | 'iridescent') => {
     setSelectedAnimation(animation);
   };
 
@@ -163,6 +163,7 @@ export default function Home() {
             showTextMesh={selectedAnimation === 'textMesh'}
             showTriangleMesh={selectedAnimation === 'triangleMesh'}
             showPointCloud={selectedAnimation === 'pointCloud'}
+            showIridescent={selectedAnimation === 'iridescent'}
             useShader={useShader}
           />
         </div>
@@ -221,7 +222,20 @@ export default function Home() {
           >
             Point Cloud
           </Button>
-          
+          <Button
+            onClick={() => handleAnimationChange('iridescent')}
+            variant="contained"
+            sx={{
+              backgroundColor: selectedAnimation === 'iridescent' ? 'white' : 'black',
+              color: selectedAnimation === 'iridescent' ? 'black' : 'white',
+              '&:hover': {
+                backgroundColor: 'white',
+                color: 'black',
+              },
+            }}
+          >
+            Iridescent
+          </Button>
           <Button
             onClick={() => setUseShader(!useShader)}
             variant="contained"

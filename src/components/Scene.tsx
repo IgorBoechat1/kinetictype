@@ -5,6 +5,7 @@ import { OrbitControls } from '@react-three/drei';
 import TextMesh from './TextMesh';
 import TriangleMesh from './TriangleMesh';
 import PointCloud from './PointCloud';
+import Iridescent from './Iridescent';
 import * as THREE from 'three';
 
 const fontFiles = {
@@ -36,6 +37,7 @@ interface SceneProps {
   showTextMesh: boolean;
   showTriangleMesh: boolean;
   showPointCloud: boolean;
+  showIridescent: boolean;
   useShader: boolean;
 }
 
@@ -54,6 +56,7 @@ const Scene: React.FC<SceneProps> = ({
   showTextMesh,
   showTriangleMesh,
   showPointCloud,
+  showIridescent,
 }) => {
   return (
     <div style={{ width: '100%', height: '100vh' }}>
@@ -62,10 +65,10 @@ const Scene: React.FC<SceneProps> = ({
         shadows // Enable shadows in the renderer
         camera={{ position: [0, 0, 10], fov: 50 }}
       >
-        <ambientLight intensity={1} />
+        <ambientLight intensity={2} />
         <directionalLight
           position={[10, 10, 10]}
-          intensity={12}
+          intensity={5}
           castShadow // Enable shadow casting for the light
           shadow-mapSize-width={1024}
           shadow-mapSize-height={1024}
@@ -75,6 +78,7 @@ const Scene: React.FC<SceneProps> = ({
           shadow-camera-top={10}
           shadow-camera-bottom={-10}
         />
+        <pointLight position={[-10, -10, -10]} intensity={5} />
         {showTextMesh ? (
           <TextMesh
             text={text}
@@ -95,12 +99,23 @@ const Scene: React.FC<SceneProps> = ({
             rotationIntensity={rotationIntensity}
             waveIntensity={waveIntensity}
           />
-        ) : (
+        ) : showPointCloud ? (
           <PointCloud
             color={color}
             isMicActive={isMicActive}
             displacementIntensity={displacementIntensity}
             waveIntensity={waveIntensity}
+          />
+        ) : (
+          <Iridescent
+            text={text}
+            color={color}
+            displacementIntensity={displacementIntensity}
+            waveIntensity={waveIntensity}
+            isMicActive={isMicActive}
+            useShader={useShader}
+            font={font}
+            scalingIntensity={scalingIntensity}
           />
         )}
         <OrbitControls enableZoom={true} enablePan={true} />

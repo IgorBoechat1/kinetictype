@@ -64,6 +64,8 @@ const PointCloud: React.FC<PointCloudProps> = ({
       const pointCount = 10000;
       const pointGeometry = new THREE.BufferGeometry();
       const pointVertices = new Float32Array(pointCount * 3);
+      const pointColors = new Float32Array(pointCount * 3); // Add color attribute
+
       for (let i = 0; i < pointCount; i++) {
         const theta = Math.random() * 2 * Math.PI;
         const phi = Math.acos(2 * Math.random() - 1);
@@ -71,12 +73,19 @@ const PointCloud: React.FC<PointCloudProps> = ({
         pointVertices[i * 3] = r * Math.sin(phi) * Math.cos(theta);
         pointVertices[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
         pointVertices[i * 3 + 2] = r * Math.cos(phi);
+
+        // Set initial colors
+        pointColors[i * 3] = color.r;
+        pointColors[i * 3 + 1] = color.g;
+        pointColors[i * 3 + 2] = color.b;
       }
+
       pointGeometry.setAttribute('position', new THREE.BufferAttribute(pointVertices, 3));
+      pointGeometry.setAttribute('color', new THREE.BufferAttribute(pointColors, 3)); // Add color attribute
       const initialPosition = pointGeometry.attributes.position.clone();
       pointGeometry.setAttribute('initialPosition', initialPosition);
 
-      const pointMaterial = new THREE.PointsMaterial({ color: color, size: 0.01 });
+      const pointMaterial = new THREE.PointsMaterial({ vertexColors: true, size: 0.01 });
       const pointCloud = new THREE.Points(pointGeometry, pointMaterial);
       groupRef.current.add(pointCloud);
     }
@@ -95,6 +104,7 @@ const PointCloud: React.FC<PointCloudProps> = ({
         const geometry = points.geometry as THREE.BufferGeometry;
         const positionAttribute = geometry.getAttribute('position') as THREE.BufferAttribute;
         const initialPositionAttribute = geometry.getAttribute('initialPosition') as THREE.BufferAttribute;
+        const colorAttribute = geometry.getAttribute('color') as THREE.BufferAttribute;
 
         // Morph vertices based on sound data
         for (let i = 0; i < positionAttribute.count; i++) {
@@ -109,8 +119,18 @@ const PointCloud: React.FC<PointCloudProps> = ({
             y + (Math.random() - 0.5) * displacementIntensity * t,
             z + (Math.random() - 0.5) * displacementIntensity * t
           );
+
+          // Update colors based on sound data
+          const intensity = Math.abs(Math.sin(time + i * 0.1) * t);
+          colorAttribute.setXYZ(
+            i,
+            color.r * intensity,
+            color.g * intensity,
+            color.b * intensity
+          );
         }
         positionAttribute.needsUpdate = true;
+        colorAttribute.needsUpdate = true;
 
         // Apply attractor forces to point cloud
         for (let i = 0; i < positionAttribute.count; i++) {
