@@ -7,35 +7,16 @@ import { Slider, FormControl, InputLabel, MenuItem, Select, OutlinedInput, Selec
 import MicIcon from '@mui/icons-material/Mic';
 import { Theme, useTheme } from '@mui/material/styles';
 
+// Dynamically import components
 const Scene = dynamic(() => import('../components/Scene'), { ssr: false });
+const RibbonTypography = dynamic(() => import('../components/RibbonTypography'), { ssr: false });
 
 const fontOptions = ['Playfair', 'Monigue', 'Cocogoose', 'Bodoni', 'AfterShok', 'DinerFat', 'db', 'FancyPants', 'Batuphat', 'Barrio', 'Seaside'] as const;
 
 type FontOption = typeof fontOptions[number];
 
-const ITEM_HEIGHT = 48;
-const ITEM_PADDING_TOP = 8;
-const MenuProps = {
-  PaperProps: {
-    style: {
-      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-      width: 250,
-    },
-  },
-};
-
-function getStyles(name: string, selectedName: string, theme: Theme) {
-  return {
-    fontWeight: selectedName === name
-      ? theme.typography.fontWeightMedium
-      : theme.typography.fontWeightRegular,
-  };
-}
-
 export default function Home() {
-  const [showApp, setShowApp] = useState(false);
-  const [selectedAnimation, setSelectedAnimation] = useState<'textMesh' | 'triangleMesh' | 'pointCloud' | 'iridescent'>('textMesh');
-
+  const [selectedAnimation, setSelectedAnimation] = useState<'textMesh' | 'triangleMesh' | 'pointCloud' | 'iridescent' | 'ribbonTypography'>('textMesh');
   const [text, setText] = useState('TYPE');
   const [color, setColor] = useState(new THREE.Color('#FFFFFF'));
   const [displacementIntensity, setDisplacementIntensity] = useState(1);
@@ -53,12 +34,13 @@ export default function Home() {
     setFont(event.target.value as FontOption);
   };
 
-  const handleAnimationChange = (animation: 'textMesh' | 'triangleMesh' | 'pointCloud' | 'iridescent') => {
+  const handleAnimationChange = (animation: 'textMesh' | 'triangleMesh' | 'pointCloud' | 'iridescent' | 'ribbonTypography') => {
     setSelectedAnimation(animation);
   };
 
   return (
     <section className="flex flex-col items-center justify-center min-h-screen bg-black text-white font-primary p-4 sm:p-8">
+      {/* Header */}
       <div className="flex flex-col items-center justify-center w-full">
         <h3 className="text-12 sm:text-12 font-bold mb-2 font-primary text-center">by Igor Boechat</h3>
         <h1 className="text-4xl sm:text-8xl font-bold mb-2 font-primary border-3 border-white text-center">Kinetic Text App</h1>
@@ -71,35 +53,22 @@ export default function Home() {
               value={font}
               onChange={handleFontChange}
               input={<OutlinedInput label="Choose Font" />}
-              MenuProps={MenuProps}
               sx={{
-                '& .MuiInputBase-root': {
-                  color: 'white',
-                },
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'white',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'white',
-                },
-                '& .MuiSvgIcon-root': {
-                  color: 'white',
-                },
+                '& .MuiInputBase-root': { color: 'white' },
+                '& .MuiOutlinedInput-notchedOutline': { borderColor: 'white' },
+                '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'white' },
+                '& .MuiSvgIcon-root': { color: 'white' },
               }}
               renderValue={(selected) => selected}
             >
               {fontOptions.map((fontOption) => (
-                <MenuItem
-                  key={fontOption}
-                  value={fontOption}
-                  style={getStyles(fontOption, font, theme)}
-                >
+                <MenuItem key={fontOption} value={fontOption}>
                   {fontOption}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
-         </div>
+        </div>
 
         <TextField
           value={text}
@@ -110,20 +79,14 @@ export default function Home() {
           sx={{
             input: { color: 'white' },
             '& .MuiOutlinedInput-root': {
-              '& fieldset': {
-                borderColor: 'white',
-              },
-              '&:hover fieldset': {
-                borderColor: 'white',
-              },
-            },
-            '& .MuiInputLabel-root': {
-              color: 'white',
+              '& fieldset': { borderColor: 'white' },
+              '&:hover fieldset': { borderColor: 'white' },
             },
           }}
         />
       </div>
 
+      {/* Animation Selector */}
       <div className="flex flex-col w-full h-full mt-4">
         <div className="flex flex-col sm:flex-row gap-4 p-4">
           {[
@@ -148,35 +111,38 @@ export default function Home() {
             </div>
           ))}
         </div>
-        <div className="relative w-full flex-grow">
-          <Scene 
-            text={text}
-            color={color}
-            displacementIntensity={displacementIntensity}
-            scalingIntensity={scalingIntensity}
-            rotationIntensity={rotationIntensity}
-            waveIntensity={waveIntensity}
-            fragmentationIntensity={fragmentationIntensity}
-            isMicActive={isMicActive}
-            texture='/textures/image.jpg'
-            font={font}
-            showTextMesh={selectedAnimation === 'textMesh'}
-            showTriangleMesh={selectedAnimation === 'triangleMesh'}
-            showPointCloud={selectedAnimation === 'pointCloud'}
-            showIridescent={selectedAnimation === 'iridescent'}
-            useShader={useShader}
-          />
+        <div className="relative w-full h-full">
+          {selectedAnimation === 'ribbonTypography' ? (
+            <RibbonTypography text={text} color={color} font={font} />
+          ) : (
+            <Scene
+              text={text}
+              color={color}
+              displacementIntensity={displacementIntensity}
+              scalingIntensity={scalingIntensity}
+              rotationIntensity={rotationIntensity}
+              waveIntensity={waveIntensity}
+              fragmentationIntensity={fragmentationIntensity}
+              isMicActive={isMicActive}
+              texture="/textures/image.jpg"
+              font={font}
+              showTextMesh={selectedAnimation === 'textMesh'}
+              showTriangleMesh={selectedAnimation === 'triangleMesh'}
+              showPointCloud={selectedAnimation === 'pointCloud'}
+              showIridescent={selectedAnimation === 'iridescent'}
+              useShader={useShader}
+            />
+          )}
         </div>
       </div>
 
-      {/* Microphone Button */}
+      {/* Buttons */}
       <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 flex gap-4 bg-black p-2 rounded-xl border border-white z-20">
         <Stack spacing={2} direction="row">
           <IconButton
             onClick={() => setIsMicActive(!isMicActive)}
-            className={`w-12 h-12 flex items-center justify-center rounded-lg border ${
-              isMicActive ? 'bg-white text-black' : 'bg-black text-white'
-            } hover:bg-white hover:text-black transition-colors`}
+            className={`w-12 h-12 flex items-center justify-center rounded-lg border ${isMicActive ? 'bg-white text-black' : 'bg-black text-white'
+              } hover:bg-white hover:text-black transition-colors`}
           >
             <MicIcon sx={{ color: 'white' }} />
           </IconButton>
@@ -186,10 +152,7 @@ export default function Home() {
             sx={{
               backgroundColor: selectedAnimation === 'textMesh' ? 'white' : 'black',
               color: selectedAnimation === 'textMesh' ? 'black' : 'white',
-              '&:hover': {
-                backgroundColor: 'white',
-                color: 'black',
-              },
+              '&:hover': { backgroundColor: 'white', color: 'black' },
             }}
           >
             Text Mesh
@@ -200,10 +163,7 @@ export default function Home() {
             sx={{
               backgroundColor: selectedAnimation === 'triangleMesh' ? 'white' : 'black',
               color: selectedAnimation === 'triangleMesh' ? 'black' : 'white',
-              '&:hover': {
-                backgroundColor: 'white',
-                color: 'black',
-              },
+              '&:hover': { backgroundColor: 'white', color: 'black' },
             }}
           >
             Triangle Mesh
@@ -214,10 +174,7 @@ export default function Home() {
             sx={{
               backgroundColor: selectedAnimation === 'pointCloud' ? 'white' : 'black',
               color: selectedAnimation === 'pointCloud' ? 'black' : 'white',
-              '&:hover': {
-                backgroundColor: 'white',
-                color: 'black',
-              },
+              '&:hover': { backgroundColor: 'white', color: 'black' },
             }}
           >
             Point Cloud
@@ -228,27 +185,21 @@ export default function Home() {
             sx={{
               backgroundColor: selectedAnimation === 'iridescent' ? 'white' : 'black',
               color: selectedAnimation === 'iridescent' ? 'black' : 'white',
-              '&:hover': {
-                backgroundColor: 'white',
-                color: 'black',
-              },
+              '&:hover': { backgroundColor: 'white', color: 'black' },
             }}
           >
             Iridescent
           </Button>
           <Button
-            onClick={() => setUseShader(!useShader)}
+            onClick={() => handleAnimationChange('ribbonTypography')}
             variant="contained"
             sx={{
-              backgroundColor: useShader ? 'white' : 'black',
-              color: useShader ? 'black' : 'white',
-              '&:hover': {
-                backgroundColor: 'white',
-                color: 'black',
-              },
+              backgroundColor: selectedAnimation === 'ribbonTypography' ? 'white' : 'black',
+              color: selectedAnimation === 'ribbonTypography' ? 'black' : 'white',
+              '&:hover': { backgroundColor: 'white', color: 'black' },
             }}
           >
-            Toggle Shader
+            Ribbon Typography
           </Button>
         </Stack>
       </div>
